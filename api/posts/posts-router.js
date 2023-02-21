@@ -18,6 +18,7 @@ router.get("/", (req, res) => {
 
 //2 [GET] /api/posts/:id
 router.get("/:id", (req, res) => {
+  //console.log(req.params);
   Posts.findById(req.params.id)
     .then((post) => {
       if (!post) {
@@ -34,39 +35,64 @@ router.get("/:id", (req, res) => {
 });
 
 //3 [POST] /api/posts
-router.post("/", (req, res) => {
-  let post = req.body;
-  if (!post.title || !post.contents) {
+router.post("/", async (req, res) => {
+  const { title, contents } = req.body;
+  //let post = req.body;
+  if (!title || !contents) {
     res
       .status(400)
       .json({ message: "Lütfen gönderi için bir title ve contents sağlayın" });
   } else {
-    Posts.insert(post)
-      .then((newPost) => {
-        res.status(201).json(newPost);
-      })
-      .catch((err) => {
-        res
-          .status(500)
-          .json({ message: "Veritabanına kaydedilirken bir hata oluştu" });
-      });
+    try {
+      let { id } = await Posts.insert({ title, contents });
+      let insertedPost = await Posts.findById(id); //veritabanında var mı diye baktık
+      res.status(201).json(insertedPost);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Veritabanına kaydedilirken bir hata oluştu" });
+    }
   }
 });
+
+// router.post("/", (req, res) => {
+//   const { title, contents } = req.body;
+//   //let post = req.body;
+//   if (!title || !contents) {
+//     res
+//       .status(400)
+//       .json({ message: "Lütfen gönderi için bir title ve contents sağlayın" });
+//   } else {
+//     Posts.insert({ title, contents })
+//       .then(({ id }) => {
+//         Posts.findById(id).then((newPost) => {
+//           res.status(201).json(newPost);
+//         });
+//       })
+//       .catch((err) => {
+//         res
+//           .status(500)
+//           .json({ message: "Veritabanına kaydedilirken bir hata oluştu" });
+//       });
+//   }
+// });
 
 // 4 [PUT] /api/posts/:id
 router.put("/:id", async (req, res) => {
   try {
-    let willBeUpdatePost = await Posts.findById(req.params.id);
-    if (!willBeUpdatePost) {
+    let existPost = await Posts.findById(req.params.id);
+    if (!existPost) {
       res.status(404).json({ message: "Belirtilen ID'li gönderi bulunamadı" });
     } else {
-      if (!req.body.title || !req.body.contents) {
+      let { title, contents } = req.body;
+      if (!title || !contents) {
         res
           .status(400)
           .json({ message: "Lütfen gönderi için title ve contents sağlayın" });
       } else {
-        let updatePost = await Posts.update(req.params.id, req.body);
-        res.status(200).json(updatePost);
+        let updatePostid = await Posts.update(req.params.id, req.body); //bu satır sadece id getirdi. postun tamamı dönsün istiyoruz
+        let updatedPost = await Posts.findById(updatePostid); //postun tamamını döndürdük
+        res.status(200).json(updatedPost);
       }
     }
   } catch (error) {
@@ -82,7 +108,7 @@ router.delete("/:id", async (req, res) => {
       res.status(404).json({ message: "Belirtilen ID li gönderi bulunamadı" });
     } else {
       await Posts.remove(req.params.id);
-      res.status(200).json(willBeDeletePost);
+      res.status(200).json(willBeDeletePost); //silinecek gönderiyi de döndük
     }
   } catch (error) {
     res.status(500).json({ message: "Gönderi silinemedi" });
@@ -90,15 +116,14 @@ router.delete("/:id", async (req, res) => {
 });
 
 //6 [GET] /api/posts/:id/comments
-router.get(":id/comments", async (req, res) => {
+router.get("/:id/comments", async (req, res) => {
   try {
-    let commentsPost = await Posts.findCommentById(req.params.id);
+    let commentsPost = await Posts.findById(req.params.id);
     if (!commentsPost) {
       res.status(404).json({ message: "Girilen ID'li gönderi bulunamadı." });
     } else {
-      await Posts.findPostComments(req.params.id).then((post) => {
-        res.status(200).json(post);
-      });
+      let comments = await Posts.findPostComments(req.params.id);
+      res.status(200).json(comments);
     }
   } catch (error) {
     res.status(500).json({ message: "Yorumlar bilgisi getirilemedi" });

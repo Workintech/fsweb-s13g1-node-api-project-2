@@ -11,6 +11,6 @@ server.get("/", (req, res) => {
   res.send("2.gün projesi");
 });
 
-server.use("/api/posts", postsRouter);
+server.use("/api/posts", postsRouter); //api posttan gelenleri postsRouter üzerinde karşılıyoruz.
 
 module.exports = server;
