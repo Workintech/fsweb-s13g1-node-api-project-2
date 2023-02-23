@@ -1,7 +1,8 @@
 // require your server and launch it here
 const server = require("./api/server");
-const port = 9000;
+require("dotenv").config();
 
-server.listen(port, () => {
-  console.log(`listening on port ${port}`);
+const PORT = process.env.PORT;
+server.listen(PORT, () => {
+  console.log(`listening on port ${PORT}`);
 });

@@ -1,14 +1,15 @@
-// implement your server here
-// require your posts router and connect it here
 const express = require("express");
 
 const server = express();
 
 const postsRouter = require("./posts/posts-router");
 server.use(express.json());
+require("dotenv").config();
 
 server.get("/", (req, res) => {
-  res.send("2.gün projesi");
+  res.json({
+    message: process.env.MESSAGE || "Hey, server is up and running...",
+  });
 });
 
 server.use("/api/posts", postsRouter); //api posttan gelenleri postsRouter üzerinde karşılıyoruz.
